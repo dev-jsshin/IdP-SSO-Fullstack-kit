@@ -117,7 +117,7 @@
 						},
 						{
 							"key": "code",
-							"value": "7kX864M-6znEPzJ0uXPgkP-P3Jy_28HJfywhFDdw3iyUxn5VTpg04xI7_q5WoDhdXZq-Ws-WnaRo_MhRFjLOvmHGIpZuCKusbwCI_Cwd6b4oNBqJGGT13IiUMdzPPAvI",
+							"value": "LKX7vwR6nBd_ZQ691ixh3AmAT-eJ0onoJIKIuMbvHUy1E5Enbq7aEceOK5F0qTpz_IajbMFT_K0AH9SaDFAVCTEIXRK8CNaB26w1qMZsJGtOxbqOC-qwWokYB1ICLdmC",
 							"type": "text"
 						}
 					]
@@ -138,12 +138,57 @@
 			"response": []
 		},
 		{
-			"name": "4. 사용자 로그아웃",
+			"name": "4. 토큰 검사",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "secretpassword123",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "web-app",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6IndlYi1hcHAiLCJuYmYiOjE3NDQ3NjQ3NDYsInNjb3BlIjpbIm9wZW5pZCJdLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NjgzNDYsImlhdCI6MTc0NDc2NDc0NiwianRpIjoiMTgzMGUwNjYtY2Q1MS00ZDcxLTkyMDQtYmI1MzYxYWUyMjRjIn0.Im5y5AphAjyd9qXUzF4EfTud5pGB4B2etli3-2OI8-U9lXPgns1hMhYBo3wOx2TlJa3cnFEsspQ-rXlsfh0QOHh0c4Zd2B21pwJcCtHxsD25eFoJCuiu4hIXGmkLkjCkS6CIOfPZEvAJkdqrWXKQD5UKzI-3lRgrjVZuqzla9nayC20T5704NausPEa6AeLlhhyCbh5yD4aaHJwDZzm1Ty34eQ8_aThRGK1Dp7H0fAYniOfygt3PwAdw6fqE7Z8z2bbwJaK7Zw3UZApvrC9qbx3qj-K34CEhnNA_N-2g_Djb_lhHl-Z74nCQmx1j3auNw_Tnptjw7vYhFeIngGRbtw",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:7555/oauth2/introspect",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7555",
+					"path": [
+						"oauth2",
+						"introspect"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. 사용자 로그아웃",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:7555/connect/logout?state=ssssttttaaaatttee&post_logout_redirect_uri=https://google.com&id_token_hint=eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJoaXN0X2FkbWluIiwiYXVkIjoiaGlzdC13ZWItYXBwIiwiYXpwIjoiaGlzdC13ZWItYXBwIiwiYXV0aF90aW1lIjoxNzQ0NzYxODAxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NjM2MTgsImlhdCI6MTc0NDc2MTgxOCwianRpIjoiZTY2MzJiYzMtOTlmZi00Mzc1LWJlZTQtNTIxNDFkZWI0ODIzIiwic2lkIjoiVGJiQ2NibXMwdXJCMGFwdTBaVzZEcWdwd3lfSllWS1NGekU1YnU5cEtCQSJ9.LxmJUjf4ufd669zwKhOCgXxPeX8GWaHl_dGaaiHGPO2hRrwSb3w_U--jY1UBqk9gfr5xCGOBZJTB1rAsuyUF1ue4-39Eg14JGVkC34iZ4S6cpDpq-hJkySg21zji9yK3DlDCD-Cfen5W_FJQ4qh7H1cDK0nR36vsAFAWp0p7bmO5rBn2K42Lh1rMp8qOU6qE9hDbx1GoZvspA8utbDyaz4kjdgHHEE8wfe7TeZjrQJxsBsbNW0-GqCmCMY5K-uRy_vAkh94eJTEBL5rflDuZdbcNW3Y3G68xlBdRempowakEGlInQdpBWFLvBivSuHEWwHR4wdDgY_dd0sCR67SXxQ",
+					"raw": "http://localhost:7555/connect/logout?state=ssssttttaaaatttee&post_logout_redirect_uri=https://google.com&id_token_hint=eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6IndlYi1hcHAiLCJhenAiOiJ3ZWItYXBwIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo3NTU1IiwiZXhwIjoxNzQ0NzY0NDgyLCJpYXQiOjE3NDQ3NjI2ODIsImp0aSI6ImU4YjMyNzdhLTljNDQtNGVhNS1hNzY3LWU3YTcwNWUyZGQwNyIsInNpZCI6IlRiYkNjYm1zMHVyQjBhcHUwWlc2RHFncHd5X0pZVktTRnpFNWJ1OXBLQkEifQ.NA2eJ50brqAOb-4lYm4GK9jYWylMw_O4maf1qeA9sVaAY8YlLZKYC_WoDTVo-mgfaTpVHQIYDzaY5uMcwJbKk4-2JHG4Q_3dvA56GFcqMJUXTuz0dvgrq8Al63CgBBdzf6iMRrjsqjItmi_vno0LeUg2tt1gOfWzPEXc3kKAgDtyukxFsOfsHSy1AtjYE1dPsFKqyeLlevm_bbUku9xHz100xyPM8ZE3At-hbR6F9l6WWwtw7zFMHLZSUN-TZ5zal5rS10tXlH7Qrx3BOm5NVFlVPFBtbd6W2vWV1wMEpEyPS1yK-y5tKBre5TBRKth8hEt3TSYriUQqHREXIyS8NQ",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -164,7 +209,7 @@
 						},
 						{
 							"key": "id_token_hint",
-							"value": "eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJoaXN0X2FkbWluIiwiYXVkIjoiaGlzdC13ZWItYXBwIiwiYXpwIjoiaGlzdC13ZWItYXBwIiwiYXV0aF90aW1lIjoxNzQ0NzYxODAxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NjM2MTgsImlhdCI6MTc0NDc2MTgxOCwianRpIjoiZTY2MzJiYzMtOTlmZi00Mzc1LWJlZTQtNTIxNDFkZWI0ODIzIiwic2lkIjoiVGJiQ2NibXMwdXJCMGFwdTBaVzZEcWdwd3lfSllWS1NGekU1YnU5cEtCQSJ9.LxmJUjf4ufd669zwKhOCgXxPeX8GWaHl_dGaaiHGPO2hRrwSb3w_U--jY1UBqk9gfr5xCGOBZJTB1rAsuyUF1ue4-39Eg14JGVkC34iZ4S6cpDpq-hJkySg21zji9yK3DlDCD-Cfen5W_FJQ4qh7H1cDK0nR36vsAFAWp0p7bmO5rBn2K42Lh1rMp8qOU6qE9hDbx1GoZvspA8utbDyaz4kjdgHHEE8wfe7TeZjrQJxsBsbNW0-GqCmCMY5K-uRy_vAkh94eJTEBL5rflDuZdbcNW3Y3G68xlBdRempowakEGlInQdpBWFLvBivSuHEWwHR4wdDgY_dd0sCR67SXxQ"
+							"value": "eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6IndlYi1hcHAiLCJhenAiOiJ3ZWItYXBwIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo3NTU1IiwiZXhwIjoxNzQ0NzY0NDgyLCJpYXQiOjE3NDQ3NjI2ODIsImp0aSI6ImU4YjMyNzdhLTljNDQtNGVhNS1hNzY3LWU3YTcwNWUyZGQwNyIsInNpZCI6IlRiYkNjYm1zMHVyQjBhcHUwWlc2RHFncHd5X0pZVktTRnpFNWJ1OXBLQkEifQ.NA2eJ50brqAOb-4lYm4GK9jYWylMw_O4maf1qeA9sVaAY8YlLZKYC_WoDTVo-mgfaTpVHQIYDzaY5uMcwJbKk4-2JHG4Q_3dvA56GFcqMJUXTuz0dvgrq8Al63CgBBdzf6iMRrjsqjItmi_vno0LeUg2tt1gOfWzPEXc3kKAgDtyukxFsOfsHSy1AtjYE1dPsFKqyeLlevm_bbUku9xHz100xyPM8ZE3At-hbR6F9l6WWwtw7zFMHLZSUN-TZ5zal5rS10tXlH7Qrx3BOm5NVFlVPFBtbd6W2vWV1wMEpEyPS1yK-y5tKBre5TBRKth8hEt3TSYriUQqHREXIyS8NQ"
 						}
 					]
 				}
