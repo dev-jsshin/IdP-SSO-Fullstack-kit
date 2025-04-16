@@ -1,0 +1,175 @@
+{
+	"info": {
+		"_postman_id": "ef4e31f9-2981-41df-905a-f48eb1cc395c",
+		"name": "IdP-server",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32727405"
+	},
+	"item": [
+		{
+			"name": "1. 사용자 로그인",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "password",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:7555/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7555",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Authorization_Code 발급",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7555/oauth2/authorize?response_type=code&client_id=web-app&scope=openid&redirect_uri=https://oauth.pstmn.io/v1/callback&state=ssssttttaaaatttee",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7555",
+					"path": [
+						"oauth2",
+						"authorize"
+					],
+					"query": [
+						{
+							"key": "response_type",
+							"value": "code"
+						},
+						{
+							"key": "client_id",
+							"value": "web-app"
+						},
+						{
+							"key": "scope",
+							"value": "openid"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://oauth.pstmn.io/v1/callback"
+						},
+						{
+							"key": "state",
+							"value": "ssssttttaaaatttee"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Token 발급",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "secretpassword123",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "web-app",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"type": "text"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://oauth.pstmn.io/v1/callback",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "7kX864M-6znEPzJ0uXPgkP-P3Jy_28HJfywhFDdw3iyUxn5VTpg04xI7_q5WoDhdXZq-Ws-WnaRo_MhRFjLOvmHGIpZuCKusbwCI_Cwd6b4oNBqJGGT13IiUMdzPPAvI",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:7555/oauth2/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7555",
+					"path": [
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. 사용자 로그아웃",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7555/connect/logout?state=ssssttttaaaatttee&post_logout_redirect_uri=https://google.com&id_token_hint=eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJoaXN0X2FkbWluIiwiYXVkIjoiaGlzdC13ZWItYXBwIiwiYXpwIjoiaGlzdC13ZWItYXBwIiwiYXV0aF90aW1lIjoxNzQ0NzYxODAxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NjM2MTgsImlhdCI6MTc0NDc2MTgxOCwianRpIjoiZTY2MzJiYzMtOTlmZi00Mzc1LWJlZTQtNTIxNDFkZWI0ODIzIiwic2lkIjoiVGJiQ2NibXMwdXJCMGFwdTBaVzZEcWdwd3lfSllWS1NGekU1YnU5cEtCQSJ9.LxmJUjf4ufd669zwKhOCgXxPeX8GWaHl_dGaaiHGPO2hRrwSb3w_U--jY1UBqk9gfr5xCGOBZJTB1rAsuyUF1ue4-39Eg14JGVkC34iZ4S6cpDpq-hJkySg21zji9yK3DlDCD-Cfen5W_FJQ4qh7H1cDK0nR36vsAFAWp0p7bmO5rBn2K42Lh1rMp8qOU6qE9hDbx1GoZvspA8utbDyaz4kjdgHHEE8wfe7TeZjrQJxsBsbNW0-GqCmCMY5K-uRy_vAkh94eJTEBL5rflDuZdbcNW3Y3G68xlBdRempowakEGlInQdpBWFLvBivSuHEWwHR4wdDgY_dd0sCR67SXxQ",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7555",
+					"path": [
+						"connect",
+						"logout"
+					],
+					"query": [
+						{
+							"key": "state",
+							"value": "ssssttttaaaatttee"
+						},
+						{
+							"key": "post_logout_redirect_uri",
+							"value": "https://google.com"
+						},
+						{
+							"key": "id_token_hint",
+							"value": "eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJoaXN0X2FkbWluIiwiYXVkIjoiaGlzdC13ZWItYXBwIiwiYXpwIjoiaGlzdC13ZWItYXBwIiwiYXV0aF90aW1lIjoxNzQ0NzYxODAxLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NjM2MTgsImlhdCI6MTc0NDc2MTgxOCwianRpIjoiZTY2MzJiYzMtOTlmZi00Mzc1LWJlZTQtNTIxNDFkZWI0ODIzIiwic2lkIjoiVGJiQ2NibXMwdXJCMGFwdTBaVzZEcWdwd3lfSllWS1NGekU1YnU5cEtCQSJ9.LxmJUjf4ufd669zwKhOCgXxPeX8GWaHl_dGaaiHGPO2hRrwSb3w_U--jY1UBqk9gfr5xCGOBZJTB1rAsuyUF1ue4-39Eg14JGVkC34iZ4S6cpDpq-hJkySg21zji9yK3DlDCD-Cfen5W_FJQ4qh7H1cDK0nR36vsAFAWp0p7bmO5rBn2K42Lh1rMp8qOU6qE9hDbx1GoZvspA8utbDyaz4kjdgHHEE8wfe7TeZjrQJxsBsbNW0-GqCmCMY5K-uRy_vAkh94eJTEBL5rflDuZdbcNW3Y3G68xlBdRempowakEGlInQdpBWFLvBivSuHEWwHR4wdDgY_dd0sCR67SXxQ"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
