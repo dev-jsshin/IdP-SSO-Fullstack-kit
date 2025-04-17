@@ -1,5 +1,6 @@
 package com.idpserver.global.security;
 
+import com.idpserver.global.config.cors.CorsConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,16 +17,19 @@ public class DefaultSecurityConfig {
     @Autowired
     private UserDetailsService userDetailsService;
 
-    // TODO: CORS, CSRF 관련 설정 필요
+    @Autowired
+    private CorsConfig corsConfig;
+
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login").permitAll()
-                        .requestMatchers("/example").permitAll()
+                        .requestMatchers("/").permitAll()
                         .anyRequest().authenticated()
                 )
+                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource())) // CORS 설정;
                 .logout(logout -> logout // IdP -> IdP Logout(자체 로그아웃) 요청 성공 후 호출될 Custom Handler
                         .logoutUrl("/logout") // 사용자가 호출할 로그아웃 경로
                         // .logoutSuccessUrl("/") // 로그아웃 성공 시 리디렉션될 IdP 내부 경로
