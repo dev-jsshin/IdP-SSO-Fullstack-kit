@@ -76,7 +76,7 @@ public class CustomOidcRpLogoutSuccessHandler implements AuthenticationSuccessHa
         String sessionId = null;
         String clientId = null;
 
-        log.info("[LogoutSuccessHandler] 로그아웃 성공 후 Notification 처리 init CLIENT_ID: {}", clientId);
+        log.info("[LogoutSuccessHandler] 로그아웃 성공 후 Notification 처리 시작");
 
         // 2. id_token_hint 파싱 및 검증
         if (StringUtils.hasText(idTokenHint)) {
