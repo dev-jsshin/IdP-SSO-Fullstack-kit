@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
@@ -70,11 +71,12 @@ public class RegisteredClientService {
             ClientSettings clientSettings = buildClientSettings(tmClientSetting, clientAuthenticationMethods, clientIdForLogging);
             // 7. 토큰 관련 설정 (유효 기간, 리프레시 토큰 재사용 여부, ID 토큰 서명 알고리즘 등)
             TokenSettings tokenSettings = buildTokenSettings(tmClientSetting, clientIdForLogging);
+            // 8. 클라이언트 시크릿 값 결정 로직 추가
+            String effectiveClientSecret = determineClientSecretValue(tnClient, clientAuthenticationMethods);
 
             // --- 최종 RegisteredClient 객체 생성 ---
-            RegisteredClient registeredClient = RegisteredClient.withId(String.valueOf(tnClient.getClientSn()))
+            RegisteredClient.Builder builder = RegisteredClient.withId(String.valueOf(tnClient.getClientSn()))
                     .clientId(tnClient.getClientId())
-                    .clientSecret(tnClient.getClientSecret()) // TODO: 비밀번호 인코딩 필요 (PasswordEncoder 주입)
                     .clientName(tnClient.getClientNm())
                     .clientIdIssuedAt(tnClient.getRegDt() != null ? tnClient.getRegDt().toInstant() : Instant.now())
                     .clientAuthenticationMethods(methods -> methods.addAll(clientAuthenticationMethods))
@@ -83,10 +85,16 @@ public class RegisteredClientService {
                     .postLogoutRedirectUris(uris -> uris.addAll(postLogoutRedirectUris))
                     .scopes(s -> s.addAll(scopes))
                     .clientSettings(clientSettings)
-                    .tokenSettings(tokenSettings)
-                    .build();
+                    .tokenSettings(tokenSettings);
 
+            // 결정된 시크릿 값 설정 (null이 아닐 경우에만)
+            if (effectiveClientSecret != null) {
+                builder.clientSecret(effectiveClientSecret);
+            }
+
+            RegisteredClient registeredClient = builder.build();
             log.info("RegisteredClient 객체 변환 완료. CLINET_ID: [{}]", registeredClient.getClientId());
+
             return registeredClient;
 
         } catch (OAuth2AuthenticationException e) {
@@ -97,6 +105,41 @@ public class RegisteredClientService {
             log.error("RegisteredClient 변환 중 예상치 못한 오류 발생: CLINET_ID [{}]", clientIdForLogging, e);
             throw new OAuth2AuthenticationException(
                     new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, "클라이언트 정보 처리 중 내부 서버 오류가 발생했습니다.", null), e);
+        }
+    }
+
+    /**
+     * 클라이언트 인증 방식에 따라 사용할 클라이언트 시크릿 값을 결정
+     *
+     * @param tnClient TnClient 엔티티 (clientSecret 및 clientSecretHash 포함)
+     * @param methods  설정된 클라이언트 인증 방식 Set
+     * @return RegisteredClient에 설정할 시크릿 값 (해시 또는 원본), 해당 없으면 null
+     */
+    private String determineClientSecretValue(TnClient tnClient, Set<ClientAuthenticationMethod> methods) {
+        String clientId = tnClient.getClientId();
+
+        boolean usesBasicOrPost = methods.contains(ClientAuthenticationMethod.CLIENT_SECRET_BASIC) ||
+                methods.contains(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+        boolean usesJwt = methods.contains(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
+
+        if (usesBasicOrPost) {
+            String hashedSecret = tnClient.getClientSecretHash();
+            if (!StringUtils.hasText(hashedSecret)) {
+                // basic 또는 post 방식인데 해시된 비밀번호가 없으면 오류
+                throw createConfigurationError(clientId, "'client_secret_basic' 또는 'client_secret_post' 인증 방식을 사용하려면 해시된 클라이언트 비밀번호(CLIENT_SECRET_HASH)가 필요합니다.");
+            }
+            return hashedSecret;
+        } else if (usesJwt) {
+            String originalSecret = tnClient.getClientSecret();
+            if (!StringUtils.hasText(originalSecret)) {
+                // jwt 방식인데 원본 비밀번호가 없으면 오류
+                throw createConfigurationError(clientId, "'client_secret_jwt' 인증 방식을 사용하려면 원본 클라이언트 비밀번호(CLIENT_SECRET)가 필요합니다.");
+            }
+            log.info("CLIENT_ID [{}] 인증 방식 'jwt'에 대해 원본 시크릿(CLIENT_SECRET) 사용", clientId);
+            return originalSecret;
+        } else { // private_key_jwt 또는 none 방식 등 시크릿이 필요 없는 경우
+            log.info("CLIENT_ID [{}] 인증 방식은 클라이언트 시크릿을 사용하지 않습니다.", clientId);
+            return null;
         }
     }
 
@@ -181,10 +224,11 @@ public class RegisteredClientService {
 
         if (StringUtils.hasText(algorithmString)) {
             try {
-                SignatureAlgorithm algorithm = SignatureAlgorithm.from(algorithmString);
-                String algName = algorithm.getName();
-
                 if (isPrivateKeyJwt) {
+
+                    SignatureAlgorithm algorithm = SignatureAlgorithm.from(algorithmString);
+                    String algName = algorithm.getName();
+
                     // private_key_jwt: 비대칭 알고리즘(RS*, ES*, PS*) 검증
                     boolean isAsymmetric = algName.startsWith("RS") || algName.startsWith("ES") || algName.startsWith("PS");
                     if (!isAsymmetric) {
@@ -194,24 +238,27 @@ public class RegisteredClientService {
                     log.info("CLIENT_ID [{}] 'private_key_jwt'에 대해 Token Endpoint 서명 알고리즘 설정: {}", clientId, algName);
 
                 } else if (isClientSecretJwt) {
-                    // client_secret_jwt: 대칭 알고리즘(HS*) 검증
-                    boolean isSymmetricHmac = algName.startsWith("HS");
-                    if (!isSymmetricHmac) {
-                        throw createConfigurationError(clientId, "'client_secret_jwt' 인증 방식에는 대칭키 서명 알고리즘(HS*)만 사용 가능합니다.");
-                    }
-                    builder.tokenEndpointAuthenticationSigningAlgorithm(algorithm);
-                    log.info("CLIENT_ID [{}] 'client_secret_jwt'에 대해 Token Endpoint 서명 알고리즘 설정: {}", clientId, algName);
 
+                    MacAlgorithm algorithm = MacAlgorithm.from(algorithmString);
+
+                    if (algorithm == null) { // HS* 외 다른 값이 들어온 경우
+                        throw createConfigurationError(clientId, "'client_secret_jwt' 인증 방식에는 대칭키 서명 알고리즘(HS*)만 사용 가능합니다. 잘못된 값: " + algorithmString);
+                    }
+                    // MacAlgorithm.from()은 HS* 계열만 반환하므로 별도 startsWith("HS") 체크 불필요
+                    builder.tokenEndpointAuthenticationSigningAlgorithm(algorithm);
+                    log.info("CLIENT_ID [{}] 'client_secret_jwt'에 대해 Token Endpoint 서명 알고리즘 설정: {}", clientId, algorithm.getName());
                 }
             } catch (IllegalArgumentException e) {
                 throw createConfigurationError(clientId, "유효하지 않은 Token Endpoint 서명 알고리즘 값입니다: " + algorithmString);
             }
         } else {
             if (isPrivateKeyJwt) {
+
                 log.info("CLIENT_ID [{}] 인증 방식 'private_key_jwt'에 Token Endpoint 서명 알고리즘이 지정되지 않았습니다. 서버 기본값 또는 JWK 'alg' 파라미터를 사용할 수 있습니다.", clientId);
-            } else if (isClientSecretJwt) {
-                builder.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.from("HS256"));
-                log.info("CLIENT_ID [{}] 인증 방식 'client_secret_jwt'에 Token Endpoint 서명 알고리즘이 지정되지 않았습니다. 기본값(보통 HS256)을 사용합니다.", clientId);
+            }  else if (isClientSecretJwt) {
+
+                log.info("CLIENT_ID [{}] 인증 방식 'client_secret_jwt'에 Token Endpoint 서명 알고리즘이 지정되지 않았습니다. 기본값으로 HS256을 사용합니다.", clientId);
+                builder.tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256);
             }
         }
     }

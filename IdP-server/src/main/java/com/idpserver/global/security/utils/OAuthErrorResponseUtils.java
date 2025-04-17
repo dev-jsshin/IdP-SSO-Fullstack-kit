@@ -71,7 +71,7 @@ public final class OAuthErrorResponseUtils {
      */
     public static String mapToUserFriendlyMessage(OAuth2Error error) {
 
-        String defaultMessage = "요청 처리 중 오류가 발생했습니다. 관리자에게 문의 바랍니다.";
+        String defaultMessage = error.getDescription();
         String description = error.getDescription();
 
         if (OAuth2ErrorCodes.INVALID_REQUEST.equals(error.getErrorCode())) {

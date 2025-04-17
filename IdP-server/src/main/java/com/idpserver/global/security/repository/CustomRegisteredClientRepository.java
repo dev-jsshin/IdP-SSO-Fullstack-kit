@@ -109,7 +109,7 @@ public class CustomRegisteredClientRepository implements RegisteredClientReposit
 
         try {
             RegisteredClient registeredClient = registeredClientService.buildRegisteredClient(tnClient);
-            log.info("RegisteredClient 객체 생성 완료. CLIENT_ID: [{}]", registeredClient.getClientId());
+            log.info("RegisteredClient 객체 생성 완료. CLIENT_ID: [{}]", registeredClient.toString());
             return registeredClient;
         } catch (OAuth2AuthenticationException e) {
             log.warn("RegisteredClient 객체 생성 중 클라이언트 설정 오류 발생. CLIENT_ID: [{}]", tnClient.getClientId(), e);

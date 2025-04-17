@@ -38,6 +38,10 @@ public class TnClient {
     @Column(name = "CLIENT_SECRET", nullable = false)
     private String clientSecret;
 
+    /* 클라이언트 시크릿 해시 */
+    @Column(name = "CLIENT_SECRET_HASH", nullable = false)
+    private String clientSecretHash;
+
     /* 클라이언트 이름 */
     @Column(name = "CLIENT_NM", nullable = false)
     private String clientNm;

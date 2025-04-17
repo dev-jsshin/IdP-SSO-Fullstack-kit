@@ -83,7 +83,7 @@
 			"response": []
 		},
 		{
-			"name": "3. Token 발급",
+			"name": "3-1. Token 발급 (client_secret_basic)",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -117,7 +117,7 @@
 						},
 						{
 							"key": "code",
-							"value": "LKX7vwR6nBd_ZQ691ixh3AmAT-eJ0onoJIKIuMbvHUy1E5Enbq7aEceOK5F0qTpz_IajbMFT_K0AH9SaDFAVCTEIXRK8CNaB26w1qMZsJGtOxbqOC-qwWokYB1ICLdmC",
+							"value": "CdHWjEKTbz5lVuLM5IB1KK2wX7wZcjsEaj9n9r0uxpoxkaROJ-tR4eezbCXSOROmN8pHQpDiMfYJTfbYaOWkjpH544FxN2oRtSIDAITMc923DeNsAdqThS6rGn5S8De-",
 							"type": "text"
 						}
 					]
@@ -138,14 +138,174 @@
 			"response": []
 		},
 		{
-			"name": "4. 토큰 검사",
+			"name": "3-2. Token 발급 (client_secret_jwt)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"(async () => {\r",
+							"    // --- 사용자 제공 정보 ---\r",
+							"    const clientId = pm.environment.get(\"clientId\") || \"web-app\"; // 환경 변수 우선 사용\r",
+							"    const clientSecret = pm.environment.get(\"clientSecret\") || \"T4h1sIsMyV3ryL0ngAndS3cur3Cl1entS3cr3tP@ssw0rd!\";\r",
+							"    const tokenEndpointUrl = pm.environment.get(\"tokenEndpointUrl\") || \"http://localhost:7555/oauth2/token\";\r",
+							"    const algorithm = { name: \"HMAC\", hash: \"SHA-256\" }; // Web Crypto API용 알고리즘 객체\r",
+							"    const jwtHeader = { \"alg\": \"HS256\", \"typ\": \"JWT\" };   // JWT 헤더 (알고리즘 이름은 문자열 유지)\r",
+							"    // ---------------------\r",
+							"\r",
+							"    // JWT Payload 생성\r",
+							"    const nowSeconds = Math.floor(Date.now() / 1000);\r",
+							"    const expSeconds = nowSeconds + (5 * 60); // 5분 후 만료 (초 단위)\r",
+							"    const jwtId = uuidv4(); // 고유 ID 생성 (아래 uuidv4 함수 필요)\r",
+							"\r",
+							"    const payload = {\r",
+							"      \"iss\": clientId,          // Issuer: 클라이언트 ID\r",
+							"      \"sub\": clientId,          // Subject: 클라이언트 ID\r",
+							"      \"aud\": tokenEndpointUrl,  // Audience: 토큰 엔드포인트 URL\r",
+							"      \"jti\": jwtId,             // JWT ID: 고유 식별자\r",
+							"      \"iat\": nowSeconds,        // Issued At: 발급 시간 (선택 사항)\r",
+							"      \"exp\": expSeconds         // Expiration Time: 만료 시간 (필수)\r",
+							"    };\r",
+							"\r",
+							"    // ArrayBuffer를 Base64URL 문자열로 인코딩하는 함수\r",
+							"    function arrayBufferToBase64Url(buffer) {\r",
+							"        const uint8Array = new Uint8Array(buffer);\r",
+							"        let binaryString = '';\r",
+							"        uint8Array.forEach(byte => {\r",
+							"            binaryString += String.fromCharCode(byte);\r",
+							"        });\r",
+							"        const base64 = btoa(binaryString); // 표준 Base64 인코딩\r",
+							"        // Base64를 Base64URL로 변환: +, / 를 -, _ 로 바꾸고, 패딩(=) 제거\r",
+							"        return base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\r",
+							"    }\r",
+							"\r",
+							"    // UUID v4 생성 함수 (Postman에서 사용 가능)\r",
+							"    function uuidv4() {\r",
+							"      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\r",
+							"        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);\r",
+							"        return v.toString(16);\r",
+							"      });\r",
+							"    }\r",
+							"\r",
+							"    try {\r",
+							"        // --- 1. Header와 Payload 인코딩 ---\r",
+							"        // JSON 문자열을 UTF-8 ArrayBuffer로 변환 후 Base64URL 인코딩\r",
+							"        const encodedHeader = arrayBufferToBase64Url(new TextEncoder().encode(JSON.stringify(jwtHeader)));\r",
+							"        const encodedPayload = arrayBufferToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));\r",
+							"\r",
+							"        // --- 2. 서명할 데이터 준비 ---\r",
+							"        const dataToSign = `${encodedHeader}.${encodedPayload}`;\r",
+							"        const dataToSignBuffer = new TextEncoder().encode(dataToSign); // 서명할 데이터를 ArrayBuffer로\r",
+							"\r",
+							"        // --- 3. 서명 키(clientSecret) 준비 ---\r",
+							"        // clientSecret 문자열을 ArrayBuffer로 변환하고 CryptoKey로 임포트\r",
+							"        const key = await crypto.subtle.importKey(\r",
+							"            \"raw\",                           // 키 형식: 바이트 시퀀스\r",
+							"            new TextEncoder().encode(clientSecret), // 키 데이터 (UTF-8 인코딩된 바이트)\r",
+							"            algorithm,                       // 사용할 알고리즘 (HMAC/SHA-256)\r",
+							"            false,                           // 키 추출 가능 여부 (false)\r",
+							"            [\"sign\"]                         // 키 용도: 서명용\r",
+							"        );\r",
+							"\r",
+							"        // --- 4. 데이터 서명 ---\r",
+							"        // 준비된 키와 데이터로 서명 실행 (결과는 ArrayBuffer)\r",
+							"        const signatureBuffer = await crypto.subtle.sign(\r",
+							"            algorithm.name, // 알고리즘 이름 (HMAC)\r",
+							"            key,            // 임포트된 CryptoKey\r",
+							"            dataToSignBuffer // 서명할 데이터 (ArrayBuffer)\r",
+							"        );\r",
+							"\r",
+							"        // --- 5. 서명 결과 인코딩 ---\r",
+							"        // 서명 결과 ArrayBuffer를 Base64URL 문자열로 변환\r",
+							"        const encodedSignature = arrayBufferToBase64Url(signatureBuffer);\r",
+							"\r",
+							"        // --- 6. 최종 JWT 생성 ---\r",
+							"        const jwtAssertion = `${dataToSign}.${encodedSignature}`;\r",
+							"\r",
+							"        // 생성된 JWT를 Postman Collection 변수로 설정\r",
+							"        pm.collectionVariables.set(\"generatedClientAssertion\", jwtAssertion);\r",
+							"        console.log(\"JWT Assertion generated successfully using Web Crypto API.\", jwtAssertion);\r",
+							"\r",
+							"    } catch (error) {\r",
+							"        console.error(\"Error generating JWT assertion using Web Crypto API:\", error);\r",
+							"        // 오류 발생 시 변수 설정을 취소하거나 오류 상태를 표시할 수 있습니다.\r",
+							"        pm.collectionVariables.unset(\"generatedClientAssertion\");\r",
+							"    }\r",
+							"\r",
+							"})(); "
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"type": "text"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://oauth.pstmn.io/v1/callback",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "openid",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "web-app",
+							"type": "text"
+						},
+						{
+							"key": "client_assertion_type",
+							"value": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+							"type": "text"
+						},
+						{
+							"key": "client_assertion",
+							"value": "{{generatedClientAssertion}}",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "vfs0a_dhzel_gpn4-jd30irwpPv5z16CnVuWpoVQGCRb2O-hf9OoIbO-q8Vk-lsaI1YRa0n7G04V8cQIFHhCpMXyQAemCj_-yh4F2Z8N2XXWXr-htesN117cQt1VpD8S",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:7555/oauth2/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7555",
+					"path": [
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Token 검사",
 			"request": {
 				"auth": {
 					"type": "basic",
 					"basic": [
 						{
 							"key": "password",
-							"value": "secretpassword123",
+							"value": "T4h1sIsMyV3ryL0ngAndS3cur3Cl1entS3cr3tP@ssw0rd!",
 							"type": "string"
 						},
 						{
@@ -162,7 +322,7 @@
 					"urlencoded": [
 						{
 							"key": "token",
-							"value": "eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6IndlYi1hcHAiLCJuYmYiOjE3NDQ3NjQ3NDYsInNjb3BlIjpbIm9wZW5pZCJdLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NjgzNDYsImlhdCI6MTc0NDc2NDc0NiwianRpIjoiMTgzMGUwNjYtY2Q1MS00ZDcxLTkyMDQtYmI1MzYxYWUyMjRjIn0.Im5y5AphAjyd9qXUzF4EfTud5pGB4B2etli3-2OI8-U9lXPgns1hMhYBo3wOx2TlJa3cnFEsspQ-rXlsfh0QOHh0c4Zd2B21pwJcCtHxsD25eFoJCuiu4hIXGmkLkjCkS6CIOfPZEvAJkdqrWXKQD5UKzI-3lRgrjVZuqzla9nayC20T5704NausPEa6AeLlhhyCbh5yD4aaHJwDZzm1Ty34eQ8_aThRGK1Dp7H0fAYniOfygt3PwAdw6fqE7Z8z2bbwJaK7Zw3UZApvrC9qbx3qj-K34CEhnNA_N-2g_Djb_lhHl-Z74nCQmx1j3auNw_Tnptjw7vYhFeIngGRbtw",
+							"value": "eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6IndlYi1hcHAiLCJhenAiOiJ3ZWItYXBwIiwiYXV0aF90aW1lIjoxNzQ0NzY3NDE4LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NjkyNDQsImlhdCI6MTc0NDc2NzQ0NCwianRpIjoiMDU1NGQxYzUtNTZhZS00OGY1LTgwMjktY2ZhNmQwYTllZjAxIiwic2lkIjoiakZPWnpKUnhlOVNIYUpMdExzeEtKV1pGRXFGM09UN1lYLU05ZXUtMzFrbyJ9.fQdApV82zKwGJjC9A5qdWpavwgSuIxJBqLxcrTOEEi58HGzJkVJ6vhETFdYq7AyfPj2-6QCwV-MJU4BBmS4AF39IzibiaSrJBoundm6ScqzrcNmwJJr6t2bJpPLIh4apxOkGKGlhjdn2G7jZc8TmM5sC9HUHdXRxKkmWxhb0zybeXgjFr-u2ipGM1FTSIlRAXTQZVfMknGGEOArYoq21ym3w2HbaMHkVBkURNq2Qu7nvuRhpyY4XjiE9V6_gIhS1jZWToE1Y7_qr7LVy6Vqrpn-4Dtn33TY5yHfyRg2cGju43GNwWSNuj8WU068-W-tcVHMi0uoRvhEvaDNLe_cceg",
 							"type": "text"
 						}
 					]
@@ -183,7 +343,52 @@
 			"response": []
 		},
 		{
-			"name": "5. 사용자 로그아웃",
+			"name": "5. Token 폐기",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "T4h1sIsMyV3ryL0ngAndS3cur3Cl1entS3cr3tP@ssw0rd!",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "web-app",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6IndlYi1hcHAiLCJuYmYiOjE3NDQ3Njc0NDQsInNjb3BlIjpbIm9wZW5pZCJdLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NzEwNDQsImlhdCI6MTc0NDc2NzQ0NCwianRpIjoiMzk2MzM3ZmUtZDkzMi00MjhjLThlODgtYjQwNzhhNWRiNDcyIn0.h9wP88RLtRGHvf8PBc6ycosB5s9mg0T3Nek2o9_fMNe2BlYm5lBNJv0QsEcNwkge2ZmgkWNoTAzCqrfbhy31zOQqkxCRFmDn_pa6tLPv3mz32Q6I2MaZo_kDpcIq1_TUtlLrwobcNg2gZS-nIm5_OmMI6qYZWRhW5KPntSA3RUKEaY4s7WDKj0XofobFTnKJdDsCO7XfhoBNeRQcz4Nb9oe3RSxRrx6JB9hypupSRUBgm7C-jMFp4rWSdwyRHfUVjCQvT9Ti3vWREOexKW0mm-bgWH3O7TXrHpbRmx8FaVkEbcaR7wEgqxTPhGxeFGCSJl8wTIwJXI8SKjPS3iPQwg",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:7555/oauth2/revoke",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7555",
+					"path": [
+						"oauth2",
+						"revoke"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. 사용자 로그아웃",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -215,6 +420,12 @@
 				}
 			},
 			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "generatedClientAssertion",
+			"value": ""
 		}
 	]
 }

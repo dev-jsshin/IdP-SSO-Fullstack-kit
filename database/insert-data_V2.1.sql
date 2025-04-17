@@ -29,19 +29,20 @@ VALUES ((SELECT IDP_GROUP_SN
 ;
 
 
-# TEST CLIENT 생성
+# TEST CLIENT client_secret_basic 생성
 INSERT INTO TN_CLIENT (
-    IDP_GROUP_SN, CLIENT_ID, CLIENT_SECRET, CLIENT_NM, CLIENT_STATUS,
+    IDP_GROUP_SN, CLIENT_ID, CLIENT_SECRET, CLIENT_SECRET_HASH, CLIENT_NM, CLIENT_STATUS,
     REMARKS, REG_SN
 ) VALUES (
     (SELECT IDP_GROUP_SN
 	 FROM TN_IDP_GROUP
 	 WHERE IDP_GROUP_NM = 'IdP'),
     'web-app',
-    '$2a$12$8eOmgROvG4tv8EMRvRXDJuBA3sB8MFZDJ1754fntXjGT4hxyZ4mYm',
+    'T4h1sIsMyV3ryL0ngAndS3cur3Cl1entS3cr3tP@ssw0rd!',
+	'$2a$12$DlQ0QZC1qik81ORQzNKFIuCyQkqUg70.h7dVAovs.dsJaApUT7bAq',
     '웹 애플리케이션',
     '1',
-    '테스트 클라이언트 (PASSWORD: secretpassword123)',
+    '테스트 클라이언트',
     0)
 ;
 
@@ -54,7 +55,7 @@ INSERT INTO TM_CLIENT_SETTING (
 	 WHERE CLIENT_ID = 'web-app'),
     'client_secret_basic',
     'https://oauth.pstmn.io/v1/callback',
-    'https://naver.com',
+    'https://google.com',
     'RS256',
     'http://localhost:7555/logout',
     'Y')
