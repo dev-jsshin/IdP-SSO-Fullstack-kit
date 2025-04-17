@@ -298,6 +298,61 @@
 			"response": []
 		},
 		{
+			"name": "3-3. Token 발급 (client_secret_post)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "client_id",
+							"value": "web-app",
+							"type": "text"
+						},
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"type": "text"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://oauth.pstmn.io/v1/callback",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "openid",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "kNQhqmP3qo1ohvJDxXbDVcO5FQBuhIenpAm9ds5rPkMW1vj-xoTDrn9Kn_JOdFaZXRv60i3KjvWjhpQWuVowDpUWPJkE57i_7zytAFqGFqJY-Al9J3O_8U6kDC2b5teT",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "T4h1sIsMyV3ryL0ngAndS3cur3Cl1entS3cr3tP@ssw0rd!",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:7555/oauth2/token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7555",
+					"path": [
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "4. Token 검사",
 			"request": {
 				"auth": {
