@@ -2,6 +2,7 @@ package com.idpserver.global.security;
 
 import com.idpserver.global.config.cors.CorsConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -9,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 
 @Configuration
@@ -20,26 +22,36 @@ public class DefaultSecurityConfig {
     @Autowired
     private CorsConfig corsConfig;
 
+    @Autowired
+    @Qualifier("loginSuccessHandler") // SecurityBeanConfig 등에 정의된 빈
+    private AuthenticationSuccessHandler loginSuccessHandler; // 로그인 성공 핸들러
+
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+                // ... authorizeHttpRequests (로그인 페이지, 정적 리소스 permitAll) ...
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login").permitAll()
-                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/login", "/error", "/", "/index.html", "/static/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource())) // CORS 설정;
-                .logout(logout -> logout // IdP -> IdP Logout(자체 로그아웃) 요청 성공 후 호출될 Custom Handler
-                        .logoutUrl("/logout") // 사용자가 호출할 로그아웃 경로
-                        // .logoutSuccessUrl("/") // 로그아웃 성공 시 리디렉션될 IdP 내부 경로
-                        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler()) // 성공 시 기본 200 OK 반환 (SPA 등에서 유용)
-                        .invalidateHttpSession(true) // 세션 무효화
-                        .clearAuthentication(true)   // 인증 정보 제거
-                        .deleteCookies("JSESSIONID") // 세션 쿠키 삭제
+                // ===>>> formLogin 설정 필수 <<<===
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login") // POST /login 처리
+                        .successHandler(loginSuccessHandler) // 로그인 성공 핸들러
+                        .permitAll()
                 )
-                .csrf(AbstractHttpConfigurer::disable) // CSRF 보호 비활성화 (테스트용)
-                .userDetailsService(userDetailsService);
+                // ... logout, sessionManagement, csrf, userDetailsService, cors ...
+                .logout(logout -> logout // 웹 로그아웃 (옵션)
+                        .logoutUrl("/api/logout")
+                        // ...
+                        .permitAll()
+                )
+                .sessionManagement(session -> session.sessionFixation(fix -> fix.migrateSession()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .userDetailsService(userDetailsService)
+                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()));
 
         return http.build();
     }
