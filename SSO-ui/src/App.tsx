@@ -1,9 +1,15 @@
-import LoginPage from './page/LoginPage'
+import LoginPage from './page/Login/LoginPage'
+import CallbackPage from './page/callback/Callback';
+import { Route, Routes } from 'react-router-dom';
 
 function App() {
 
   return (
-      <LoginPage />
+
+    <Routes>
+          <Route path='/login' element={<LoginPage />} />
+          <Route path='/callback' element={<CallbackPage />} />
+        </Routes>
   )
 }
 

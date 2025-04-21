@@ -63,12 +63,6 @@ public class SecurityBeanConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    @Bean
-    public AuthenticationSuccessHandler loginSuccessHandler() {
-        SavedRequestAwareAuthenticationSuccessHandler handler = new SavedRequestAwareAuthenticationSuccessHandler();
-        return handler;
-    }
-
     /**
      * OAuth2 인가 정보(Authorization Grant, 토큰 등)를 저장하고 관리하는 Bean 생성
      * TODO: In-Memory 사용 중. (서버 재시작 시 데이터 소멸) -> DB 저장 방식으로 변경 필요
@@ -236,6 +230,7 @@ public class SecurityBeanConfig {
         return new HttpSessionEventPublisher();
     }
 
+    // TODO: 추후 설정파일에서 추출 방식 변경
     /**
      * OAuth2 Authorization Server의 전반적인 설정을 정의하는 Bean 생성 (예: Issuer URI, 엔드포인트 경로 등)
      * @return AuthorizationServerSettings 인스턴스

@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from 'react';
-import { loginUser } from '../service/authService';
+import { loginUser, LoginResult } from '../../service/authService';
 import styles from './LoginPage.module.css';
 
 const LoginPage: React.FC = () => {
@@ -10,27 +10,33 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
-    setLoading(true);
 
     try {
-      const response = await loginUser({ username, password });
+      // authService의 loginUser 호출 (LoginResult 타입을 반환)
+      const result: LoginResult = await loginUser({ username, password });
 
-      if (response.success) {
-        alert('로그인 성공!');
-      } else {
-        setError(response.message || '아이디 또는 비밀번호가 잘못되었습니다.');
+      if (result.success && result.redirectUrl) {
+          window.location.href = result.redirectUrl;
+      } else if (result.success) {
+           // 로그인 성공했지만 리디렉션 URL이 없는 경우 (예: 기본 성공 처리)
+           console.log('Login successful, no redirect URL provided.');
+           alert('로그인 성공!');
+           setLoading(false);
+      }
+      else {
+          setError(result.message || '로그인에 실패했습니다.');
+          setLoading(false);
       }
     } catch (err) {
-      setError('로그인 요청 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+       console.error("Unexpected error during login process:", err);
+       setError('로그인 처리 중 예상치 못한 오류가 발생했습니다.');
+       setLoading(false); // 로딩 상태 해제
     }
   };
 
   return (
     <div className={styles.loginContainer}>
-      <h2>SSO 로그인</h2>
+      <h2>로그인</h2>
       <form onSubmit={handleSubmit} className={styles.loginForm}>
         <div className={styles.inputGroup}>
           <label htmlFor="username">아이디</label>
