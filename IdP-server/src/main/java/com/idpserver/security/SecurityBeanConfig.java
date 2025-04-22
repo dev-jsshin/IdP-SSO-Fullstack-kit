@@ -1,20 +1,20 @@
 package com.idpserver.security;
 
+import com.idpserver.security.service.OidcTokenService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.core.Authentication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
@@ -28,9 +28,6 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -49,13 +46,14 @@ import java.util.UUID;
 @Configuration
 public class SecurityBeanConfig {
 
+    @Autowired
+    private OidcTokenService oidcTokenService;
+
     @Value("${security.oauth2.authorizationserver.issuer}")
     private String issuerUri;
 
     @Value("${auth.paths.logout-url}")
     private String sloLogoutUrl;
-
-    private static final Logger logger = LoggerFactory.getLogger(SecurityBeanConfig.class);
 
     /**
      * Spring Security의 인증 처리를 담당하는 AuthenticationManager Bean 생성
@@ -76,68 +74,14 @@ public class SecurityBeanConfig {
     public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
         return new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
     }
+
     /**
-     * OIDC ID 토큰 생성 시 'sid' (세션 ID) 클레임을 추가하는 Customizer Bean 생성
-     * AuthService.java에서 Authentication 객체의 details에 저장한 세션 ID를 사용 (비동기 환경에서 동작 가능, RequestContextHolder 의존 X)
-     * @return OAuth2TokenCustomizer 인스턴스
+     * OIDC ID 토큰 생성 시 'sid'(세션 ID 해시) 클레임을 추가하는 Bean 생성
+     * @return ID 토큰에 'sid' 클레임을 추가하는 로직이 포함된 {@link OAuth2TokenCustomizer} 인스턴스
      */
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> idTokenSidCustomizer() {
-        return (context) -> {
-            // 토큰 타입이 ID 토큰일 경우에만 Customizer 실행
-            if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
-                logger.info("[OAuth2TokenCustomizer] id token 생성 context 감지. Authentication details에서 SID 조회 시도");
-
-                // 컨텍스트에서 현재 토큰에 대한 Authentication 객체 가져오기
-                Authentication authentication = context.getPrincipal();
-                String sessionId = null;
-
-                // Authentication 객체와 details 객체 유효성 검사
-                if (authentication != null) {
-                    Object detailsObject = authentication.getDetails();
-
-                    if (detailsObject instanceof Map) {
-
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> details = (Map<String, Object>) detailsObject;
-                        sessionId = (String) details.get("sessionId"); // *** AuthService.java*** 에서 저장 시 사용한 키("sessionId")로 조회
-
-                        if(sessionId != null){
-                            logger.info("[OAuth2TokenCustomizer] Authentication details에서 `sessionId` [{}] 발견", sessionId);
-                        } else {
-                            logger.info("[OAuth2TokenCustomizer] Authentication details에 `sessionId` 키가 없거나 값이 null입니다.");
-                        }
-
-                    } else {
-                        logger.info("[OAuth2TokenCustomizer] Authentication details 객체가 Map 타입이 아닙니다. (타입: {})",
-                                (detailsObject != null ? detailsObject.getClass().getName() : "null"));
-                    }
-                } else {
-                    logger.info("[OAuth2TokenCustomizer] Authentication 객체를 찾을 수 없습니다.");
-                }
-
-                // 조회된 세션 ID가 존재하면 ID 토큰의 'sid' 클레임으로 추가
-                if (sessionId != null) {
-                    logger.info("[OAuth2TokenCustomizer] 조회된 `sessionId` [{}]를 'sid' 클레임으로 추가 완료", sessionId);
-                    context.getClaims().claim("sid", sessionId);
-
-                    try {
-                        String sessionIdHash = calculateSha256Hash(sessionId);
-                        logger.info("[OAuth2TokenCustomizer] 원본 sessionId [{}]의 SHA-256 해시값 [{}] 계산 완료.", sessionId, sessionIdHash);
-
-                        context.getClaims().claim("sid", sessionIdHash);
-                        logger.info("[OAuth2TokenCustomizer] 'sid' 클레임에 세션 ID 해시값 추가 완료.");
-
-                    } catch (NoSuchAlgorithmException e) {
-                        logger.error("[OAuth2TokenCustomizer] 세션 ID 해시 계산 중 오류 발생 (알고리즘 없음): {}", e.getMessage(), e);
-                    } catch (Exception e) {
-                        logger.error("[OAuth2TokenCustomizer] 세션 ID 해시 계산 또는 클레임 추가 중 예외 발생: {}", e.getMessage(), e);
-                    }
-                } else {
-                    logger.info("[OAuth2TokenCustomizer] 유효한 `sessionId` 를 찾지 못해 'sid' 클레임 추가 불가");
-                }
-            }
-        };
+        return context -> oidcTokenService.addSidClaimToIdToken(context);
     }
 
     /**
