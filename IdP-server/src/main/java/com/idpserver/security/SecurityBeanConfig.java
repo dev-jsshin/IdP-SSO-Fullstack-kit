@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.context.annotation.Bean;
@@ -47,6 +48,12 @@ import java.util.UUID;
  */
 @Configuration
 public class SecurityBeanConfig {
+
+    @Value("${security.oauth2.authorizationserver.issuer}")
+    private String issuerUri;
+
+    @Value("${auth.paths.logout-url}")
+    private String sloLogoutUrl;
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityBeanConfig.class);
 
@@ -236,8 +243,8 @@ public class SecurityBeanConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
-                .issuer("http://localhost:7555")
-                .oidcLogoutEndpoint("/connect/logout")
+                .issuer(issuerUri)
+                .oidcLogoutEndpoint(sloLogoutUrl)
                 // .oidcClientRegistrationEndpoint("/connect/register")
                 // .oidcUserInfoEndpoint("/userinfo")
                 .build();

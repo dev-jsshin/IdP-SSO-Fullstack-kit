@@ -27,12 +27,12 @@
 					]
 				},
 				"url": {
-					"raw": "http://localhost:7555/login",
+					"raw": "http://localhost:8443/login",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "7555",
+					"port": "8443",
 					"path": [
 						"login"
 					]
@@ -148,7 +148,7 @@
 							"    // --- 사용자 제공 정보 ---\r",
 							"    const clientId = pm.environment.get(\"clientId\") || \"web-app\"; // 환경 변수 우선 사용\r",
 							"    const clientSecret = pm.environment.get(\"clientSecret\") || \"T4h1sIsMyV3ryL0ngAndS3cur3Cl1entS3cr3tP@ssw0rd!\";\r",
-							"    const tokenEndpointUrl = pm.environment.get(\"tokenEndpointUrl\") || \"http://localhost:7555/oauth2/token\";\r",
+							"    const tokenEndpointUrl = pm.environment.get(\"tokenEndpointUrl\") || \"http://localhost:8443/oauth2/token\";\r",
 							"    const algorithm = { name: \"HMAC\", hash: \"SHA-256\" }; // Web Crypto API용 알고리즘 객체\r",
 							"    const jwtHeader = { \"alg\": \"HS256\", \"typ\": \"JWT\" };   // JWT 헤더 (알고리즘 이름은 문자열 유지)\r",
 							"    // ---------------------\r",
@@ -252,7 +252,7 @@
 						},
 						{
 							"key": "redirect_uri",
-							"value": "https://oauth.pstmn.io/v1/callback",
+							"value": "http://localhost:8444/callback",
 							"type": "text"
 						},
 						{
@@ -277,18 +277,18 @@
 						},
 						{
 							"key": "code",
-							"value": "vfs0a_dhzel_gpn4-jd30irwpPv5z16CnVuWpoVQGCRb2O-hf9OoIbO-q8Vk-lsaI1YRa0n7G04V8cQIFHhCpMXyQAemCj_-yh4F2Z8N2XXWXr-htesN117cQt1VpD8S",
+							"value": "kNQhqmP3qo1ohvJDxXbDVcO5FQBuhIenpAm9ds5rPkMW1vj-xoTDrn9Kn_JOdFaZXRv60i3KjvWjhpQWuVowDpUWPJkE57i_7zytAFqGFqJY-Al9J3O_8U6kDC2b5teT",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "http://localhost:7555/oauth2/token",
+					"raw": "http://localhost:8443/oauth2/token",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "7555",
+					"port": "8443",
 					"path": [
 						"oauth2",
 						"token"
@@ -377,18 +377,18 @@
 					"urlencoded": [
 						{
 							"key": "token",
-							"value": "eyJraWQiOiI5MDUyN2JkMy0xNGNkLTRjMDktOWJkMS01ZmE0YTY4NDlhM2MiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6IndlYi1hcHAiLCJhenAiOiJ3ZWItYXBwIiwiYXV0aF90aW1lIjoxNzQ0NzY3NDE4LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDQ3NjkyNDQsImlhdCI6MTc0NDc2NzQ0NCwianRpIjoiMDU1NGQxYzUtNTZhZS00OGY1LTgwMjktY2ZhNmQwYTllZjAxIiwic2lkIjoiakZPWnpKUnhlOVNIYUpMdExzeEtKV1pGRXFGM09UN1lYLU05ZXUtMzFrbyJ9.fQdApV82zKwGJjC9A5qdWpavwgSuIxJBqLxcrTOEEi58HGzJkVJ6vhETFdYq7AyfPj2-6QCwV-MJU4BBmS4AF39IzibiaSrJBoundm6ScqzrcNmwJJr6t2bJpPLIh4apxOkGKGlhjdn2G7jZc8TmM5sC9HUHdXRxKkmWxhb0zybeXgjFr-u2ipGM1FTSIlRAXTQZVfMknGGEOArYoq21ym3w2HbaMHkVBkURNq2Qu7nvuRhpyY4XjiE9V6_gIhS1jZWToE1Y7_qr7LVy6Vqrpn-4Dtn33TY5yHfyRg2cGju43GNwWSNuj8WU068-W-tcVHMi0uoRvhEvaDNLe_cceg",
+							"value": "eyJraWQiOiJkMjgzMTZkYi00ZmNjLTQyOGItOTMyMS0zYWZmN2QxZjNiMjciLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6IndlYi1hcHAiLCJhenAiOiJ3ZWItYXBwIiwiYXV0aF90aW1lIjoxNzQ1MjIxODA5LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0Ojc1NTUiLCJleHAiOjE3NDUyMjM2NzUsImlhdCI6MTc0NTIyMTg3NSwianRpIjoiOGFlYWJlYTctZjAwZi00MDBhLTkyNjItMzQ5OWQ5ZWJlYzIwIiwic2lkIjoickFQVGt0TlczSmRIOGlJRkNHWUxUMmh3Q0tMSG42Y0ZQY201MkV3N1BCMCJ9.dgBo5TYpB9MpySWy6iz7CBgBIMyc39bPMWDg2Sj1VTuGLBMlf75js0fM2JoBDsK-aS6EnQuidQn9P0sX75_qXvc5haSOdXsOFOAgA1g0bj6AbUMX_aOVnf0ii8KPRi5jl1NCq9A7YJNVjgs65nbRoqDCbVE-kDfNyuzfEp2x3BSpkqpMWqGDWfvbPeMt2H5ExOBg-hCNKynaxK9_AbC7sAQvC1WpvehlxGKHKQJ4Vr2wDx8OTAifZIEAtfM0_DLrOjOT1d8I9tPz5p1zW-M3-n-jAhS6iB1OzBJD9aoisoJ_JlCZ-F4CAM9KASW49QqBk6UTqAb58toAIbnoPF7ylA",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "http://localhost:7555/oauth2/introspect",
+					"raw": "http://localhost:8443/oauth2/introspect",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "7555",
+					"port": "8443",
 					"path": [
 						"oauth2",
 						"introspect"
@@ -428,12 +428,12 @@
 					]
 				},
 				"url": {
-					"raw": "http://localhost:7555/oauth2/revoke",
+					"raw": "http://localhost:8443/oauth2/revoke",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "7555",
+					"port": "8443",
 					"path": [
 						"oauth2",
 						"revoke"

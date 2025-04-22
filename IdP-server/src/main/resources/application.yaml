@@ -31,4 +31,12 @@ logging:
 security:
   oauth2:
     authorizationserver:
-      issuer: http://localhost:7555
+      issuer: http://localhost:8443
+
+auth:
+  base-url: http://localhost:8444
+  paths:
+    login-url: /login
+    logout-url: /connect/logout
+  oauth2:
+    authorization-entry-point: /oauth2/authorize

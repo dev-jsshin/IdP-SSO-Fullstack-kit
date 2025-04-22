@@ -6,6 +6,7 @@ import com.idpserver.security.handler.CustomOidcRpLogoutSuccessHandler;
 import com.idpserver.security.handler.CustomOidcBackChannelLogoutNotificationHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -41,13 +42,24 @@ public class AuthorizationServerConfig {
     @Autowired
     private JwtDecoder jwtDecoder;
 
-
-    @Autowired
-    @Qualifier("CustomLoginSuccessHandler") // SecurityBeanConfig 등에 정의된 빈
-    private AuthenticationSuccessHandler CustomLoginSuccessHandler; // 로그인 성공 핸들러
-
     @Autowired
     private CorsConfig corsConfig;
+
+    @Autowired
+    @Qualifier("CustomLoginSuccessHandler")
+    private AuthenticationSuccessHandler CustomLoginSuccessHandler; // 로그인 성공 핸들러
+
+    @Value("${auth.base-url}")
+    private String authBaseUrl;
+
+    @Value("${auth.paths.login-url}")
+    private String ssoLoginUrl;
+
+    @Value("${auth.paths.logout-url}")
+    private String sloLogoutUrl;
+
+    @Value("${auth.oauth2.authorization-entry-point}")
+    private String authorizationEntryPoint;
 
     @Bean
     @Order(1) // 가장 높은 우선순위
@@ -58,9 +70,9 @@ public class AuthorizationServerConfig {
                 new OAuth2AuthorizationServerConfigurer();
 
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
-        RequestMatcher loginProcessingMatcher = new AntPathRequestMatcher("/login", "POST");
-        RequestMatcher oidcLogoutMatcher = new AntPathRequestMatcher("/logout", "GET");
-        RequestMatcher authorizeMatcher = new AntPathRequestMatcher("/oauth2/authorize", "GET");
+        RequestMatcher loginProcessingMatcher = new AntPathRequestMatcher(ssoLoginUrl, "POST");
+        RequestMatcher oidcLogoutMatcher = new AntPathRequestMatcher(sloLogoutUrl, "GET");
+        RequestMatcher authorizeMatcher = new AntPathRequestMatcher(authorizationEntryPoint, "GET");
 
         RequestMatcher authorizationServerAndLoginMatcher = new OrRequestMatcher(
                 endpointsMatcher,          // OAuth2/OIDC 표준 엔드포인트 포함
@@ -84,12 +96,12 @@ public class AuthorizationServerConfig {
                 .securityMatcher(authorizationServerAndLoginMatcher)
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("http://localhost:5173/login"), // <<<--- 로그인 페이지 경로 지정
+                                new LoginUrlAuthenticationEntryPoint(authBaseUrl + ssoLoginUrl), // <<<--- 로그인 페이지 경로 지정
                                 new MediaTypeRequestMatcher(org.springframework.http.MediaType.TEXT_HTML)
                         )
                 )
                 .formLogin(form -> form
-                        .loginProcessingUrl("/login")
+                        .loginProcessingUrl(ssoLoginUrl)
                         .successHandler(CustomLoginSuccessHandler)
                         .permitAll()
                 )
@@ -110,7 +122,7 @@ public class AuthorizationServerConfig {
                 })
                 // 5. 나머지 보안 설정 적용
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/logout").permitAll()
+                        .requestMatchers(ssoLoginUrl).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(withDefaults()))

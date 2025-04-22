@@ -1,5 +1,6 @@
 package com.idpserver.config.cors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -8,21 +9,22 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * CORS 설정을 정의하는 Bean
+ * @return CorsConfigurationSource
+ */
 @Configuration
 public class CorsConfig {
 
-    private final String ssoLogin = "http://localhost:5173";    // TODO: 추후 하드코딩 방식 변경 필요
+    @Value("${auth.base-url}")
+    private String authBaseUrl;
 
-    /**
-     * CORS 설정을 정의하는 Bean
-     * @return CorsConfigurationSource
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // --- 허용할 Origin 설정 ---
-        configuration.setAllowedOrigins(List.of(ssoLogin));
+        configuration.setAllowedOrigins(List.of(authBaseUrl));
 
         // --- 허용할 HTTP 메서드 ---
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH")); // 필요한 메서드만 허용 가능

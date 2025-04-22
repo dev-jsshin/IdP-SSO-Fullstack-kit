@@ -30,3 +30,11 @@ security:
   oauth2:
     authorizationserver:
       issuer:
+
+auth:
+  base-url:
+  paths:
+    login-url: /login
+    logout-url: /connect/logout
+  oauth2:
+    authorization-entry-point: /oauth2/authorize
