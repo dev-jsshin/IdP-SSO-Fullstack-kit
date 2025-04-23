@@ -29,15 +29,10 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -82,18 +77,6 @@ public class SecurityBeanConfig {
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> idTokenSidCustomizer() {
         return context -> oidcTokenService.addSidClaimToIdToken(context);
-    }
-
-    /**
-     * 입력 문자열의 SHA-256 해시값을 계산하고 Base64 URL-safe 인코딩으로 반환
-     * @param input 원본 문자열 (세션 ID)
-     * @return Base64 URL-safe 인코딩된 SHA-256 해시값
-     * @throws NoSuchAlgorithmException SHA-256 알고리즘을 찾을 수 없을 때
-     */
-    private String calculateSha256Hash(String input) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
     }
 
     /**
