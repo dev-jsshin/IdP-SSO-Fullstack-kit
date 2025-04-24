@@ -1,5 +1,5 @@
 import apiClient from '../common/axiosInstance';
-import axios, { AxiosError } from 'axios'; // AxiosError 타입 사용
+import { AxiosError } from 'axios'; // AxiosError 타입 사용
 
 // 로그인 폼 데이터 인터페이스
 interface LoginData {
@@ -82,3 +82,5 @@ export const loginUser = async (loginData: LoginData): Promise<LoginResult> => {
         }
     }
 };
+
+export type { LoginData, LoginResult }; // 타입 내보내기

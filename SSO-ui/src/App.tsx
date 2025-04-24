@@ -1,4 +1,4 @@
-import LoginPage from './page/Login/LoginPage'
+import LoginPage from './page/login/LoginPage'
 import CallbackPage from './page/callback/Callback';
 import { Route, Routes } from 'react-router-dom';
 
